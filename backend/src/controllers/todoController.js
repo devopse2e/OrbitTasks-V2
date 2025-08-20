@@ -1,8 +1,9 @@
 const Todo = require('../models/todoModel');
 const User = require('../models/userModel'); // Import User to fetch timezone
 const mongoose = require('mongoose');
-const { addDays, addWeeks, addMonths, addYears, isAfter, parseISO } = require('date-fns');
+const { addDays, addWeeks, addMonths, addYears, isAfter, parseISO, set } = require('date-fns'); // UPDATED: Added 'set' for preserving time
 const { toZonedTime, fromZonedTime } = require('date-fns-tz');
+
 
 // Safe parseISO helper to handle non-string inputs
 function safeParseISO(dateOrString) {
@@ -11,6 +12,7 @@ function safeParseISO(dateOrString) {
   if (dateOrString instanceof Date) return dateOrString;
   return null;
 }
+
 
 // Helper for recurrence (timezone-aware)
 function calculateNextDueDate(currentDueDate, pattern, interval = 1, timeZone = 'UTC') {
@@ -24,19 +26,19 @@ function calculateNextDueDate(currentDueDate, pattern, interval = 1, timeZone = 
     zonedDate = toZonedTime(new Date(), timeZone);
   }
 
-  let nextUtcDate;
+  let nextZonedDate;
   switch (pattern) {
     case 'daily':
-      nextUtcDate = addDays(zonedDate, interval);
+      nextZonedDate = addDays(zonedDate, interval);
       break;
     case 'weekly':
-      nextUtcDate = addWeeks(zonedDate, interval);
+      nextZonedDate = addWeeks(zonedDate, interval);
       break;
     case 'monthly':
-      nextUtcDate = addMonths(zonedDate, interval);
+      nextZonedDate = addMonths(zonedDate, interval);
       break;
     case 'yearly':
-      nextUtcDate = addYears(zonedDate, interval);
+      nextZonedDate = addYears(zonedDate, interval);
       break;
     case 'custom':
       return null;
@@ -44,8 +46,14 @@ function calculateNextDueDate(currentDueDate, pattern, interval = 1, timeZone = 
       return null;
   }
 
-  return fromZonedTime(nextUtcDate, timeZone).toISOString();
+  // NEW: Preserve original time (e.g., 1:00 PM)
+  const originalHours = zonedDate.getHours();
+  const originalMinutes = zonedDate.getMinutes();
+  nextZonedDate = set(nextZonedDate, { hours: originalHours, minutes: originalMinutes });
+
+  return fromZonedTime(nextZonedDate, timeZone).toISOString();
 }
+
 
 // Get all todos for logged-in user
 const getAllTodos = async (req, res, next) => {
@@ -56,6 +64,7 @@ const getAllTodos = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Create new todo
 const createTodo = async (req, res, next) => {
@@ -93,7 +102,7 @@ const createTodo = async (req, res, next) => {
       color: color || '#FFFFFF',
       isRecurring: recurringFlag,
       recurrencePattern: recurringFlag ? recurrencePattern || 'none' : 'none',
-      recurrenceEndsAt: recurrenceEndsAt || null,
+      recurrenceEndsAt: endsAtUtc || null,  // UPDATED: Use endsAtUtc
       recurrenceInterval: Math.max(1, parseInt(recurrenceInterval) || 1),
       recurrenceCustomRule: recurrenceCustomRule || '',
       originalTaskId: null,
@@ -115,6 +124,7 @@ const createTodo = async (req, res, next) => {
   }
 };
 
+
 // Update existing todo
 const updateTodo = async (req, res, next) => {
   try {
@@ -124,11 +134,18 @@ const updateTodo = async (req, res, next) => {
     const user = await User.findById(req.user.id).select('timezone');
     const userTimeZone = user?.timezone || 'UTC';
 
-    // NEW: Convert dueDate to UTC if provided
+    // UPDATED: No conversion for dueDate - assume incoming is already UTC ISO
     let dueDateUtc = null;
     if (dueDate) {
-      const localDueDate = safeParseISO(dueDate);
-      dueDateUtc = fromZonedTime(localDueDate, userTimeZone).toISOString();
+      const parsed = safeParseISO(dueDate);
+      dueDateUtc = parsed ? parsed.toISOString() : null;
+    }
+
+    // UPDATED: No conversion for recurrenceEndsAt - assume incoming is already UTC ISO
+    let endsAtUtc = null;
+    if (recurrenceEndsAt) {
+      const parsedEnds = safeParseISO(recurrenceEndsAt);
+      endsAtUtc = parsedEnds ? parsedEnds.toISOString() : null;
     }
 
     const updates = {};
@@ -142,7 +159,7 @@ const updateTodo = async (req, res, next) => {
       updates.isRecurring = Boolean(isRecurring) || (recurrencePattern && recurrencePattern !== 'none');
     }
     if (recurrencePattern !== undefined) updates.recurrencePattern = recurrencePattern;
-    if (recurrenceEndsAt !== undefined) updates.recurrenceEndsAt = recurrenceEndsAt;
+    if (recurrenceEndsAt !== undefined) updates.recurrenceEndsAt = endsAtUtc;  // UPDATED: Use endsAtUtc
     if (recurrenceInterval !== undefined) updates.recurrenceInterval = Math.max(1, parseInt(recurrenceInterval));
     if (recurrenceCustomRule !== undefined) updates.recurrenceCustomRule = recurrenceCustomRule;
 
@@ -211,6 +228,7 @@ const updateTodo = async (req, res, next) => {
   }
 };
 
+
 // Delete todo by ID
 const deleteTodo = async (req, res, next) => {
   try {
@@ -221,6 +239,7 @@ const deleteTodo = async (req, res, next) => {
     next(error);
   }
 };
+
 
 module.exports = {
   getAllTodos,
