@@ -1,5 +1,5 @@
 {
-  "name": "todo-frontend",
+  "name": "orbittasks-frontend",
   "version": "1.0.0",
   "private": true,
   "description": "Todo App Frontend with React and Backend Integration",

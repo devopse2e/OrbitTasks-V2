@@ -1,4 +1,4 @@
-// /api/index.js (move your server.js content here, adapted for Vercel serverless)
+// Updated /api/index.js with all routes mounted
 
 const express = require('express');
 const cors = require('cors');
@@ -8,11 +8,13 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const todoRoutes = require('./src/routes/todoRoutes');
-const nlpRoutes = require('./src/routes/nlpRoutes');
-const authRoutes = require('./src/routes/authRoutes');
-const errorHandler = require('./src/middleware/errorHandler');
-const userRoutes = require('./src/routes/userRoutes');
+// Import all route handlers
+const todoRoutes = require('../src/routes/todoRoutes');
+const authRoutes = require('../src/routes/authRoutes');
+const userRoutes = require('../src/routes/userRoutes');
+const nlpRoutes = require('../src/routes/nlpRoutes');
+
+const errorHandler = require('../src/middleware/errorHandler');
 
 const app = express();
 
@@ -24,10 +26,10 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Routes (adjusted paths to avoid conflicts)
-app.use('/user', userRoutes);
-app.use('/auth', authRoutes);
+// Mount all routes
 app.use('/todos', todoRoutes);
+app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 app.use('/nlp', nlpRoutes);
 
 // Health check endpoint
