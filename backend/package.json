@@ -4,7 +4,7 @@
   "description": "Todo API Backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node api/index.js",
     "dev": "nodemon server.js",
     "test": "jest",
     "test:ci": "jest --ci --reporters=default --reporters=jest-junit --coverage --coverageReporters=cobertura"
