@@ -176,12 +176,13 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
   if (detectedRecurrencePattern === 'daily') {
     let tomorrow = addDays(toZonedTime(new Date(), timeZone), 1);
     tomorrow = set(tomorrow, { hours: phraseHours ?? 9, minutes: phraseMinutes ?? 0, seconds: 0, milliseconds: 0 });
-    dueDate = fromZonedTime(tomorrow, timeZone);
+    dueDate = fromZonedTime(tomorrow, timeZone).toISOString();  // UPDATED: Ensure it's a UTC ISO string
+    console.log('Parsed dueDate (UTC) for daily:', dueDate);  // NEW: Added logging for daily case
   } else {
     const weekdayRegex = /\b(on|every)\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)s?\b/i;
     const weekdayMatch = taskTitle.match(weekdayRegex);
     if ((detectedRecurrencePattern === 'none' || detectedRecurrencePattern === 'weekly') && weekdayMatch && weekdayMatch[2]) {
-      dueDate = getNextWeekdayDate(weekdayMatch[2], timeZone);
+      dueDate = getNextWeekdayDate(weekdayMatch[2], timeZone)?.toISOString();  // UPDATED: Ensure string output
     }
     if (!dueDate) {
       let textForChrono = taskTitle;
@@ -194,9 +195,10 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
     if (dueDate && phraseHours !== null) {
       dueDate = set(dueDate, { hours: phraseHours, minutes: phraseMinutes || 0, seconds: 0, milliseconds: 0 });
     }
-  }
-  if (dueDate) { dueDate = fromZonedTime(dueDate, timeZone).toISOString();
-    console.log('Parsed dueDate (UTC):', dueDate); 
+    if (dueDate) {
+      dueDate = fromZonedTime(dueDate, timeZone).toISOString();
+      console.log('Parsed dueDate (UTC):', dueDate);
+    }
   }
 
   // Clean task title
