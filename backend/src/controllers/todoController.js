@@ -71,6 +71,7 @@ const createTodo = async (req, res, next) => {
     if (dueDate) {
       const localDueDate = safeParseISO(dueDate);  // Parse safely
       dueDateUtc = fromZonedTime(localDueDate, userTimeZone).toISOString();  // Convert to UTC ISO string
+      console.log('Saved dueDate (UTC):', dueDateUtc); 
     }
 
     // Auto-detect recurring tasks based on flag OR pattern

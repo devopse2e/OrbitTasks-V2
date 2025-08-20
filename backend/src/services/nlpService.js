@@ -195,7 +195,9 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
       dueDate = set(dueDate, { hours: phraseHours, minutes: phraseMinutes || 0, seconds: 0, milliseconds: 0 });
     }
   }
-  if (dueDate) dueDate = fromZonedTime(dueDate, timeZone).toISOString();
+  if (dueDate) { dueDate = fromZonedTime(dueDate, timeZone).toISOString();
+    console.log('Parsed dueDate (UTC):', dueDate); 
+  }
 
   // Clean task title
   tempTitle = taskTitle;
