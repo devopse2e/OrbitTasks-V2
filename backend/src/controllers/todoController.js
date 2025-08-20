@@ -62,16 +62,22 @@ const createTodo = async (req, res, next) => {
   try {
     const { text, notes, dueDate, priority, category, color, isRecurring, recurrencePattern, recurrenceEndsAt, recurrenceInterval, recurrenceCustomRule } = req.body;
 
-    // Fetch user's timezone
+    // Fetch user's timezone (still needed for other logic, like nextDueDate)
     const user = await User.findById(req.user.id).select('timezone');
     const userTimeZone = user?.timezone || 'UTC';
 
-    // NEW: Convert dueDate to UTC if provided (assume incoming dueDate is local to userTimeZone)
-    let dueDateUtc = null;
+    // UPDATED: No conversion for dueDate - assume incoming is already UTC ISO
+    let dueDateUtc = null;  // Declare it here
     if (dueDate) {
-      const localDueDate = safeParseISO(dueDate);  // Parse safely
-      dueDateUtc = fromZonedTime(localDueDate, userTimeZone).toISOString();  // Convert to UTC ISO string
-      console.log('Saved dueDate (UTC):', dueDateUtc); 
+      const parsed = safeParseISO(dueDate);  // Use your safeParseISO to validate
+      dueDateUtc = parsed ? parsed.toISOString() : null;  // Store as UTC ISO if valid
+    }
+
+    // For recurrenceEndsAt, also assume incoming is UTC (consistent with frontend)
+    let endsAtUtc = null;
+    if (recurrenceEndsAt) {
+      const parsedEnds = safeParseISO(recurrenceEndsAt);
+      endsAtUtc = parsedEnds ? parsedEnds.toISOString() : null;
     }
 
     // Auto-detect recurring tasks based on flag OR pattern
