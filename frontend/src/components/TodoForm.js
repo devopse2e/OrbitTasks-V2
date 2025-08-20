@@ -246,13 +246,14 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
 
     let finalDueDateTime = null;
     if (dueDate) {
-      // Parse as zoned time in userTimeZone, then convert to UTC ISO
-      const dateTimeString = dueTime ? `${dueDate}T${dueTime}:00` : `${dueDate}T00:00:00`;
-      const parsedLocal = parseISO(dateTimeString);
-      if (!isNaN(parsedLocal.getTime())) {
-        finalDueDateTime = fromZonedTime(parsedLocal, userTimeZone).toISOString();
-      }
+    // NEW: Parse as local time in user TZ, then convert to UTC once
+    const dateTimeString = dueTime ? `${dueDate}T${dueTime}:00` : `${dueDate}T00:00:00`;
+    const parsedLocal = parseISO(dateTimeString);
+    if (!isNaN(parsedLocal.getTime())) {
+      finalDueDateTime = fromZonedTime(parsedLocal, userTimeZone).toISOString();
+      console.log('Submitting finalDueDateTime (UTC):', finalDueDateTime);  // Debug log
     }
+  }
 
     let finalRecurrenceEndsAt = null;
     if (isRecurring && recurrenceEndsAt) {
@@ -293,26 +294,27 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
 
   // --- Apply NLP suggestions ---
   const applyNlpSuggestions = () => {
-    if (nlpSuggestedCleanedTitle) setText(nlpSuggestedCleanedTitle);
-    if (nlpSuggestedDueDate) {
-      setDueDate(formatInTimeZone(nlpSuggestedDueDate, userTimeZone, 'yyyy-MM-dd'));
-      setDueTime(formatInTimeZone(nlpSuggestedDueDate, userTimeZone, 'HH:mm'));
-    }
-    if (nlpSuggestedPriority) setPriority(nlpSuggestedPriority);
-    if (nlpSuggestedRecurrencePattern) {
-      setIsRecurring(true);
-      setRecurrencePattern(nlpSuggestedRecurrencePattern);
-    }
-    if (nlpSuggestedRecurrenceEndsAt) {
-      setRecurrenceEndsAt(formatInTimeZone(nlpSuggestedRecurrenceEndsAt, userTimeZone, 'yyyy-MM-dd'));
-    }
-    if (nlpSuggestedRecurrenceInterval) {
-      setNlpSuggestedRecurrenceInterval(nlpSuggestedRecurrenceInterval);
-    }
+  if (nlpSuggestedCleanedTitle) setText(nlpSuggestedCleanedTitle);
+  if (nlpSuggestedDueDate) {
+    // NEW: Convert NLP UTC to local TZ for inputs
+    setDueDate(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'yyyy-MM-dd'));
+    setDueTime(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'HH:mm'));
+  }
+  if (nlpSuggestedPriority) setPriority(nlpSuggestedPriority);
+  if (nlpSuggestedRecurrencePattern) {
+    setIsRecurring(true);
+    setRecurrencePattern(nlpSuggestedRecurrencePattern);
+  }
+  if (nlpSuggestedRecurrenceEndsAt) {
+    setRecurrenceEndsAt(formatInTimeZone(new Date(nlpSuggestedRecurrenceEndsAt), userTimeZone, 'yyyy-MM-dd'));
+  }
+  if (nlpSuggestedRecurrenceInterval) {
+    setNlpSuggestedRecurrenceInterval(nlpSuggestedRecurrenceInterval);
+  }
 
-    setShowNlpSuggestion(false);
-    setNlpAppliedManually(true); // Suppress NLP suggestions until user edits text again
-  };
+  setShowNlpSuggestion(false);
+  setNlpAppliedManually(true); // Suppress NLP suggestions until user edits text again
+};
 
   return (
     <>
