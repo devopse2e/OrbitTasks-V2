@@ -1,5 +1,3 @@
-// Updated /api/index.js with all routes mounted
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -15,23 +13,25 @@ const userRoutes = require('../src/routes/userRoutes');
 const nlpRoutes = require('../src/routes/nlpRoutes');
 
 const errorHandler = require('../src/middleware/errorHandler');
-const connectToDatabase = require('../src/utils/connectToDatabase'); 
+const connectToDatabase = require('../src/utils/connectToDatabase');  // NEW: Import here
+
 const app = express();
 
 // Middleware
 app.use(helmet());
-app.use(cors());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Combined CORS config
 app.use(cors({
   origin: ['https://orbittasks.vercel.app', 'http://localhost:3000'],  // Add your frontend domains
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow needed methods
   allowedHeaders: ['Content-Type', 'Authorization']  // For JWT/auth
 }));
 
+// Connect to DB on each request (serverless-friendly)
 app.use(async (req, res, next) => {
   try {
     await connectToDatabase();
@@ -41,6 +41,7 @@ app.use(async (req, res, next) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
+
 // Mount all routes
 app.use('/todos', todoRoutes);
 app.use('/auth', authRoutes);
@@ -81,47 +82,6 @@ app.use('*', (req, res) => {
 
 // Error handling middleware
 app.use(errorHandler);
-
-// MongoDB connection (lazy-loaded for serverless)
-let cachedDb = null;
-async function connectToDatabase() {
-  if (cachedDb) return cachedDb;
-
-  const mongoUri = process.env.MONGO_URI;
-
-  // Conditional TLS Configuration
-  let mongooseOptions = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  };
-
-  if (mongoUri.includes('ssl=true')) {
-    console.log('✅ SSL/TLS connection detected. Applying DocumentDB options.');
-    mongooseOptions = {
-      ...mongooseOptions,
-      tls: true,
-      tlsCAFile: '/etc/ssl/certs/rds-combined-ca-bundle.pem',
-    };
-  } else {
-    console.log('ℹ️ Standard MongoDB connection detected (no TLS).');
-  }
-
-  await mongoose.connect(mongoUri, mongooseOptions);
-  cachedDb = mongoose.connection;
-  console.log('✅ Connected to MongoDB');
-  return cachedDb;
-}
-
-// Connect to DB on each request (serverless-friendly)
-app.use(async (req, res, next) => {
-  try {
-    await connectToDatabase();
-    next();
-  } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error);
-    res.status(500).json({ error: 'Database connection failed' });
-  }
-});
 
 // No app.listen() - Vercel handles it
 module.exports = app;
