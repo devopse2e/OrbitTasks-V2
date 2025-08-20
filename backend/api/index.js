@@ -15,7 +15,7 @@ const userRoutes = require('../src/routes/userRoutes');
 const nlpRoutes = require('../src/routes/nlpRoutes');
 
 const errorHandler = require('../src/middleware/errorHandler');
-
+const connectToDatabase = require('../src/utils/connectToDatabase'); 
 const app = express();
 
 // Middleware
@@ -26,6 +26,21 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+app.use(cors({
+  origin: ['https://orbittasks.vercel.app', 'http://localhost:3000'],  // Add your frontend domains
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow needed methods
+  allowedHeaders: ['Content-Type', 'Authorization']  // For JWT/auth
+}));
+
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    console.error('❌ Failed to connect to MongoDB:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 // Mount all routes
 app.use('/todos', todoRoutes);
 app.use('/auth', authRoutes);
