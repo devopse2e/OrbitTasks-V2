@@ -28,9 +28,10 @@ const CATEGORY_COLORS = {
 
 
 const formatFullDateTime = (date, timeZone) => {
-  if (!date || isNaN(new Date(date).getTime())) return 'Not set';  // NEW: Handle invalid dates
-  return formatInTimeZone(new Date(date), timeZone, 'EEEE, MMMM d, yyyy h:mm:ss a');
+  if (!date) return 'Not set';
+  return formatInTimeZone(date, timeZone, 'EEEE, MMMM d, yyyy h:mm:ss a');
 };
+
 
 const AlarmClockIcon = ({ color }) => (
   <svg xmlns="http://www.w3.org/2000/svg"
@@ -320,15 +321,7 @@ function TodoItem({ todo, toggleTodo, onEdit, deleteTodo, setCategoryFilter, set
   if (todo.completed) {
     cardStyle.color = '#6b7280';
   }
- // NEW: Explicitly convert dueDate and createdAt to user's TZ for display
-  const dueDateInfo = formatDueDate(todo.dueDate, userTimeZone);  // Assume this is TZ-aware; if not, replace below
-  const formattedCreatedAt = formatCreatedAt(todo.createdAt, userTimeZone);  // Assume TZ-aware
-
-  // If formatDueDate isn't TZ-aware, override with this:
-  const formattedDueDate = todo.dueDate 
-    ? formatInTimeZone(new Date(todo.dueDate), userTimeZone, 'PPpp')  // e.g., "Aug 20, 2025 9:00 PM IST"
-    : 'No due date';
-
+  const dueDateInfo = formatDueDate(todo.dueDate, userTimeZone);
   return (
     <div key={refreshKey}>
       <div className={`todo-item-card ${todo.completed ? 'completed' : ''}`} style={cardStyle}>
@@ -347,7 +340,7 @@ function TodoItem({ todo, toggleTodo, onEdit, deleteTodo, setCategoryFilter, set
               onMouseLeave={() => setCreatedTooltipVisible(false)}
             >
               <span className="date-label">Created:</span>
-              <span className="date-value">{formattedCreatedAt}</span>
+              <span className="date-value">{formatCreatedAt(todo.createdAt, userTimeZone)}</span>
             </div>
           </div>
           <div className="todo-pills-row">
@@ -392,7 +385,7 @@ function TodoItem({ todo, toggleTodo, onEdit, deleteTodo, setCategoryFilter, set
                 >
                   <AlarmClockIcon color={formatDueDate(todo.dueDate, userTimeZone).color} />
                   <span className="date-value" style={{ color: formatDueDate(todo.dueDate, userTimeZone).color }}>
-                    {formattedDueDate}
+                    {formatDueDate(todo.dueDate, userTimeZone).text}
                   </span>
                 </div>
               )
