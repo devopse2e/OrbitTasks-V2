@@ -28,10 +28,9 @@ const CATEGORY_COLORS = {
 
 
 const formatFullDateTime = (date, timeZone) => {
-  if (!date) return 'Not set';
+  if (!date || isNaN(new Date(date).getTime())) return 'Not set';  // NEW: Handle invalid dates
   return formatInTimeZone(new Date(date), timeZone, 'EEEE, MMMM d, yyyy h:mm:ss a');
 };
-
 
 const AlarmClockIcon = ({ color }) => (
   <svg xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +320,7 @@ function TodoItem({ todo, toggleTodo, onEdit, deleteTodo, setCategoryFilter, set
   if (todo.completed) {
     cardStyle.color = '#6b7280';
   }
-    // NEW: Explicitly convert dueDate and createdAt to user's TZ for display
+ // NEW: Explicitly convert dueDate and createdAt to user's TZ for display
   const dueDateInfo = formatDueDate(todo.dueDate, userTimeZone);  // Assume this is TZ-aware; if not, replace below
   const formattedCreatedAt = formatCreatedAt(todo.createdAt, userTimeZone);  // Assume TZ-aware
 

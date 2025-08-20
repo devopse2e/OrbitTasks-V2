@@ -49,8 +49,13 @@ function TodoList() {
 
   const { user } = useAuthContext(); 
   const userTimeZone = user?.timezone || localStorage.getItem('userTimeZone') || 'UTC'; 
-
-
+  // NEW: Validate TZ
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: userTimeZone });
+  } catch (err) {
+    console.warn(`Invalid TZ ${userTimeZone}, falling back to UTC`);
+    userTimeZone = 'UTC';
+  }
 
   // Collapsed state
   const [isActiveCollapsed, setIsActiveCollapsed] = useState(false);
@@ -126,9 +131,11 @@ function TodoList() {
 
 
   // Listen for timezone changes to refetch
-  useEffect(() => {
+    useEffect(() => {
     const handleTzChange = () => {
       fetchTodos();
+      setRefreshKey(prev => prev + 1);  // NEW: Force child re-render
+      console.log('TZ changed - Refetching with TZ:', userTimeZone);  // Debug
     };
     window.addEventListener('timezoneChanged', handleTzChange);
     return () => window.removeEventListener('timezoneChanged', handleTzChange);
