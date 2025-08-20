@@ -66,6 +66,13 @@ const createTodo = async (req, res, next) => {
     const user = await User.findById(req.user.id).select('timezone');
     const userTimeZone = user?.timezone || 'UTC';
 
+    // NEW: Convert dueDate to UTC if provided (assume incoming dueDate is local to userTimeZone)
+    let dueDateUtc = null;
+    if (dueDate) {
+      const localDueDate = safeParseISO(dueDate);  // Parse safely
+      dueDateUtc = fromZonedTime(localDueDate, userTimeZone).toISOString();  // Convert to UTC ISO string
+    }
+
     // Auto-detect recurring tasks based on flag OR pattern
     const recurringFlag = Boolean(isRecurring) || (recurrencePattern && recurrencePattern !== 'none');
 
@@ -73,7 +80,7 @@ const createTodo = async (req, res, next) => {
       userId: req.user.id,
       text,
       notes: notes || '',
-      dueDate: dueDate || null,
+      dueDate: dueDateUtc || null,  // UPDATED: Use UTC version
       priority: priority || 'Medium',
       category: category || 'Personal',
       color: color || '#FFFFFF',
@@ -88,8 +95,8 @@ const createTodo = async (req, res, next) => {
       completedAt: null
     };
 
-    if (todoData.isRecurring && dueDate) {
-      todoData.nextDueDate = calculateNextDueDate(dueDate, todoData.recurrencePattern, todoData.recurrenceInterval, userTimeZone);
+    if (todoData.isRecurring && dueDateUtc) {  // UPDATED: Use dueDateUtc for calculation
+      todoData.nextDueDate = calculateNextDueDate(dueDateUtc, todoData.recurrencePattern, todoData.recurrenceInterval, userTimeZone);
     }
 
     const todo = new Todo(todoData);
@@ -110,13 +117,20 @@ const updateTodo = async (req, res, next) => {
     const user = await User.findById(req.user.id).select('timezone');
     const userTimeZone = user?.timezone || 'UTC';
 
+    // NEW: Convert dueDate to UTC if provided
+    let dueDateUtc = null;
+    if (dueDate) {
+      const localDueDate = safeParseISO(dueDate);
+      dueDateUtc = fromZonedTime(localDueDate, userTimeZone).toISOString();
+    }
+
     const updates = {};
     if (text !== undefined) updates.text = text;
     if (notes !== undefined) updates.notes = notes || '';
     if (priority !== undefined) updates.priority = priority;
     if (category !== undefined) updates.category = category;
     if (color !== undefined) updates.color = color;
-    if (dueDate !== undefined) updates.dueDate = dueDate;
+    if (dueDate !== undefined) updates.dueDate = dueDateUtc;  // UPDATED: Use UTC version
     if (isRecurring !== undefined || (recurrencePattern && recurrencePattern !== 'none')) {
       updates.isRecurring = Boolean(isRecurring) || (recurrencePattern && recurrencePattern !== 'none');
     }
