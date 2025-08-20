@@ -334,11 +334,13 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
               />
               {showNlpSuggestion && (
                 <div className="nlp-suggestion-box">
-                  <span>
-                    Detected:
-                    {nlpSuggestedDueDate && <strong> Due: {formatInTimeZone(nlpSuggestedDueDate, userTimeZone, 'PPP p')} </strong>}
-                    {nlpSuggestedPriority && <strong> Priority: {nlpSuggestedPriority} </strong>}
-                    {nlpSuggestedRecurrencePattern && (
+                <span>
+                  Detected:
+                  {nlpSuggestedDueDate && !isNaN(new Date(nlpSuggestedDueDate).getTime()) && (
+                    <strong> Due: {formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'PPP p')} </strong>
+                  )}
+                  {nlpSuggestedPriority && <strong> Priority: {nlpSuggestedPriority} </strong>}
+                  {nlpSuggestedRecurrencePattern && (
                     <strong>
                       Recurs: {nlpSuggestedRecurrencePattern.charAt(0).toUpperCase() + 
                               nlpSuggestedRecurrencePattern.slice(1)}
@@ -347,9 +349,9 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
                         : ''}
                     </strong>
                   )}
-                  </span>
-                  <button type="button" onClick={applyNlpSuggestions} className="apply-suggestion-btn">Apply</button>
-                </div>
+                </span>
+                <button type="button" onClick={applyNlpSuggestions} className="apply-suggestion-btn">Apply</button>
+              </div>
               )}
               <textarea
                 placeholder="Notes (optional, max 400 chars)"
