@@ -32,18 +32,18 @@ import {
   };
   
   // Helper to convert a UTC/ISO string date to a zoned date in the provided timezone
-  const getZonedDate = (dateString, timeZone) => {
-    if (!dateString || !timeZone) return null;
-    try {
-      // Parse the date as UTC (assuming backend sends ISO strings in UTC)
-      const utcDate = parseISO(dateString);
-      if (isNaN(utcDate.getTime())) return null;
-      // Convert to the provided timezone
-      return toZonedTime(utcDate, timeZone);
-    } catch {
-      return null; // Invalid date or timezone
-    }
-  };
+ const getZonedDate = (dateString, timeZone) => {
+  if (!dateString || !timeZone) return null;
+  try {
+    const utcDate = parseISO(dateString);
+    if (isNaN(utcDate.getTime())) return null;
+    const zoned = toZonedTime(utcDate, timeZone);
+    console.log('Zoned Date:', formatInTimeZone(zoned, timeZone, 'PPP p'));  // Debug
+    return zoned;
+  } catch {
+    return null;
+  }
+};
   
   // Formats the creation date (e.g., "Today", "Yesterday", "MMM d, yyyy")
   export const formatCreatedAt = (dateString, timeZone) => {
