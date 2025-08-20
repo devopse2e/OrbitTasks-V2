@@ -246,18 +246,17 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
 
     let finalDueDateTime = null;
     if (dueDate) {
-    // NEW: Parse as local time in user TZ, then convert to UTC once
-    const dateTimeString = dueTime ? `${dueDate}T${dueTime}:00` : `${dueDate}T00:00:00`;
-    const parsedLocal = parseISO(dateTimeString);
-    if (!isNaN(parsedLocal.getTime())) {
-      finalDueDateTime = fromZonedTime(parsedLocal, userTimeZone).toISOString();
-      console.log('Submitting finalDueDateTime (UTC):', finalDueDateTime);  // Debug log
+      // NEW: Parse as local time in user TZ, then convert to UTC once
+      const dateTimeString = dueTime ? `${dueDate}T${dueTime}:00` : `${dueDate}T00:00:00`;
+      const parsedLocal = parseISO(dateTimeString);
+      if (!isNaN(parsedLocal.getTime())) {
+        finalDueDateTime = fromZonedTime(parsedLocal, userTimeZone).toISOString();
+        console.log('Submitting finalDueDateTime (UTC):', finalDueDateTime);  // Debug log
+      }
     }
-  }
 
     let finalRecurrenceEndsAt = null;
     if (isRecurring && recurrenceEndsAt) {
-      // Parse as end of day in userTimeZone, then to UTC ISO
       const endsAtString = `${recurrenceEndsAt}T23:59:59`;
       const parsedEndsLocal = parseISO(endsAtString);
       if (!isNaN(parsedEndsLocal.getTime())) {
@@ -294,27 +293,27 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
 
   // --- Apply NLP suggestions ---
   const applyNlpSuggestions = () => {
-  if (nlpSuggestedCleanedTitle) setText(nlpSuggestedCleanedTitle);
-  if (nlpSuggestedDueDate) {
-    // NEW: Convert NLP UTC to local TZ for inputs
-    setDueDate(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'yyyy-MM-dd'));
-    setDueTime(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'HH:mm'));
-  }
-  if (nlpSuggestedPriority) setPriority(nlpSuggestedPriority);
-  if (nlpSuggestedRecurrencePattern) {
-    setIsRecurring(true);
-    setRecurrencePattern(nlpSuggestedRecurrencePattern);
-  }
-  if (nlpSuggestedRecurrenceEndsAt) {
-    setRecurrenceEndsAt(formatInTimeZone(new Date(nlpSuggestedRecurrenceEndsAt), userTimeZone, 'yyyy-MM-dd'));
-  }
-  if (nlpSuggestedRecurrenceInterval) {
-    setNlpSuggestedRecurrenceInterval(nlpSuggestedRecurrenceInterval);
-  }
+    if (nlpSuggestedCleanedTitle) setText(nlpSuggestedCleanedTitle);
+    if (nlpSuggestedDueDate) {
+      // NEW: Convert NLP UTC to local TZ for inputs
+      setDueDate(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'yyyy-MM-dd'));
+      setDueTime(formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'HH:mm'));
+    }
+    if (nlpSuggestedPriority) setPriority(nlpSuggestedPriority);
+    if (nlpSuggestedRecurrencePattern) {
+      setIsRecurring(true);
+      setRecurrencePattern(nlpSuggestedRecurrencePattern);
+    }
+    if (nlpSuggestedRecurrenceEndsAt) {
+      setRecurrenceEndsAt(formatInTimeZone(new Date(nlpSuggestedRecurrenceEndsAt), userTimeZone, 'yyyy-MM-dd'));
+    }
+    if (nlpSuggestedRecurrenceInterval) {
+      setNlpSuggestedRecurrenceInterval(nlpSuggestedRecurrenceInterval);
+    }
 
-  setShowNlpSuggestion(false);
-  setNlpAppliedManually(true); // Suppress NLP suggestions until user edits text again
-};
+    setShowNlpSuggestion(false);
+    setNlpAppliedManually(true); // Suppress NLP suggestions until user edits text again
+  };
 
   return (
     <>
@@ -336,24 +335,24 @@ function TodoForm({ addTodo, editTodo, isAddModalOpen, isEditModalOpen, closeAdd
               />
               {showNlpSuggestion && (
                 <div className="nlp-suggestion-box">
-                <span>
-                  Detected:
-                  {nlpSuggestedDueDate && !isNaN(new Date(nlpSuggestedDueDate).getTime()) && (
-                    <strong> Due: {formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'PPP p')} </strong>
-                  )}
-                  {nlpSuggestedPriority && <strong> Priority: {nlpSuggestedPriority} </strong>}
-                  {nlpSuggestedRecurrencePattern && (
-                    <strong>
-                      Recurs: {nlpSuggestedRecurrencePattern.charAt(0).toUpperCase() + 
-                              nlpSuggestedRecurrencePattern.slice(1)}
-                      {nlpSuggestedRecurrenceInterval && nlpSuggestedRecurrenceInterval > 1
-                        ? ` (every ${nlpSuggestedRecurrenceInterval})`
-                        : ''}
-                    </strong>
-                  )}
-                </span>
-                <button type="button" onClick={applyNlpSuggestions} className="apply-suggestion-btn">Apply</button>
-              </div>
+                  <span>
+                    Detected:
+                    {nlpSuggestedDueDate && !isNaN(new Date(nlpSuggestedDueDate).getTime()) && (
+                      <strong> Due: {formatInTimeZone(new Date(nlpSuggestedDueDate), userTimeZone, 'PPP p')} </strong>
+                    )}
+                    {nlpSuggestedPriority && <strong> Priority: {nlpSuggestedPriority} </strong>}
+                    {nlpSuggestedRecurrencePattern && (
+                      <strong>
+                        Recurs: {nlpSuggestedRecurrencePattern.charAt(0).toUpperCase() + 
+                                nlpSuggestedRecurrencePattern.slice(1)}
+                        {nlpSuggestedRecurrenceInterval && nlpSuggestedRecurrenceInterval > 1
+                          ? ` (every ${nlpSuggestedRecurrenceInterval})`
+                          : ''}
+                      </strong>
+                    )}
+                  </span>
+                  <button type="button" onClick={applyNlpSuggestions} className="apply-suggestion-btn">Apply</button>
+                </div>
               )}
               <textarea
                 placeholder="Notes (optional, max 400 chars)"
