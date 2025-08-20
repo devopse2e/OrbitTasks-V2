@@ -5,6 +5,7 @@ const { parseISO, set, addDays, addWeeks, addMonths, addYears, isAfter } = requi
 const { toZonedTime, fromZonedTime } = require('date-fns-tz');
 
 // --- Constants and Regular Expressions ---
+
 const monthNames = [
   'january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'
@@ -67,6 +68,7 @@ const monthWordsPattern = new RegExp(`\b(${monthNames.join('|')})\b`, 'gi');
 const timePattern = /\b((at|by)\s*)?(\d{1,2}(:\d{2})?\s*(am|pm))\b/gi;
 
 // --- Helpers ---
+
 const detectPriority = (text) => {
   const lowerText = text.toLowerCase();
   if (/\b(high\s*priority|urgent|with\s+high|on\s+high|high\s+priority\s+task)\b/.test(lowerText)) return 'High'; // NEW: Added "high priority task" variation
@@ -79,7 +81,6 @@ function getNextWeekdayDate(weekdayName, timeZone) {
   const daysOfWeek = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const targetDay = daysOfWeek.indexOf(weekdayName.toLowerCase());
   if (targetDay === -1) return null;
-
   const now = new Date();
   const zonedNow = toZonedTime(now, timeZone);
   let diff = targetDay - zonedNow.getDay();
@@ -94,9 +95,9 @@ function extractTimeFromText(text) {
   const match = /(?:at|by)\s*(\d{1,2})(:(\d{2}))?\s*(am|pm)?/i.exec(text);
   if (!match) return { hours: null, minutes: null };
   let hours = parseInt(match[1], 10);
-  const minutes = match[3] ? parseInt(match[3], 10) : 0;
-  if (match[4]) {
-    const meridian = match[4].toLowerCase();
+  const minutes = match[1] ? parseInt(match[1], 10) : 0;
+  if (match[2]) {
+    const meridian = match[2].toLowerCase();
     if (meridian === 'pm' && hours < 12) hours += 12;
     if (meridian === 'am' && hours === 12) hours = 0;
   }
@@ -104,6 +105,7 @@ function extractTimeFromText(text) {
 }
 
 // --- Main ---
+
 const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
   let tempTitle = taskTitle;
   let recurrenceEndsAt = null;
@@ -125,7 +127,7 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
         for (const phrase of matches) {
           const numMatch = phrase.match(/(\d+)/);
           if (numMatch) {
-            const n = parseInt(numMatch[1], 10);
+            const n = parseInt(numMatch[3], 10);
             if (!isNaN(n) && n > 0) {
               intervalExtracted = n;
               break;
@@ -146,10 +148,10 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
   // Handle "until"
   const untilPattern = /(?:until|untill|till|til)\s+(.+)/i;
   const untilMatch = taskTitle.match(untilPattern);
-  if (untilMatch && untilMatch[1] && untilMatch[1].trim()) {
-    const parsed = chrono.parse(untilMatch[1], chronoRef);
-    if (parsed?.length && parsed[0]?.start) {
-      let endDate = parsed[0].start.date();
+  if (untilMatch && untilMatch[3] && untilMatch[3].trim()) {
+    const parsed = chrono.parse(untilMatch[3], chronoRef);
+    if (parsed?.length && parsed?.start) {
+      let endDate = parsed.start.date();
       // Set to end of day in local timezone
       endDate = set(endDate, { hours: 23, minutes: 59, seconds: 59, milliseconds: 999 });
       recurrenceEndsAt = fromZonedTime(endDate, timeZone).toISOString();
@@ -164,9 +166,9 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
   for (const pattern of startDatePatterns) {
     const found = taskTitle.match(pattern);
     if (found) {
-      const parsed = chrono.parse(found[0], chronoRef);
-      if (parsed?.length && parsed[0]?.start) {
-        recurrenceStartDate = fromZonedTime(parsed[0].start.date(), timeZone).toISOString();
+      const parsed = chrono.parse(found, chronoRef);
+      if (parsed?.length && parsed?.start) {
+        recurrenceStartDate = fromZonedTime(parsed.start.date(), timeZone).toISOString();
         break;
       }
     }
@@ -176,27 +178,31 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
   if (detectedRecurrencePattern === 'daily') {
     let tomorrow = addDays(toZonedTime(new Date(), timeZone), 1);
     tomorrow = set(tomorrow, { hours: phraseHours ?? 9, minutes: phraseMinutes ?? 0, seconds: 0, milliseconds: 0 });
-    dueDate = fromZonedTime(tomorrow, timeZone);
+    dueDate = fromZonedTime(tomorrow, timeZone).toISOString();  // UPDATED: Ensure UTC output
   } else {
     const weekdayRegex = /\b(on|every)\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)s?\b/i;
     const weekdayMatch = taskTitle.match(weekdayRegex);
-    if ((detectedRecurrencePattern === 'none' || detectedRecurrencePattern === 'weekly') && weekdayMatch && weekdayMatch[2]) {
-      dueDate = getNextWeekdayDate(weekdayMatch[2], timeZone);
+    if ((detectedRecurrencePattern === 'none' || detectedRecurrencePattern === 'weekly') && weekdayMatch && weekdayMatch[4]) {
+      dueDate = getNextWeekdayDate(weekdayMatch[4], timeZone);
     }
+
     if (!dueDate) {
       let textForChrono = taskTitle;
-      if (untilMatch) textForChrono = textForChrono.replace(untilMatch[0], '');
+      if (untilMatch) textForChrono = textForChrono.replace(untilMatch, '');
       const dateTimeResult = chrono.parse(textForChrono, chronoRef);
-      if (dateTimeResult?.length > 0 && dateTimeResult[0]?.start) {
-        dueDate = dateTimeResult[0].start.date();
+      if (dateTimeResult?.length > 0 && dateTimeResult?.start) {
+        dueDate = dateTimeResult.start.date();
+      }
+
+      if (dueDate && phraseHours !== null) {
+        dueDate = set(dueDate, { hours: phraseHours, minutes: phraseMinutes || 0, seconds: 0, milliseconds: 0 });
+      }
+
+      if (dueDate) {
+        dueDate = fromZonedTime(dueDate, timeZone).toISOString();
+        console.log('Parsed dueDate (UTC):', dueDate);
       }
     }
-    if (dueDate && phraseHours !== null) {
-      dueDate = set(dueDate, { hours: phraseHours, minutes: phraseMinutes || 0, seconds: 0, milliseconds: 0 });
-    }
-  }
-  if (dueDate) { dueDate = fromZonedTime(dueDate, timeZone).toISOString();
-    console.log('Parsed dueDate (UTC):', dueDate); 
   }
 
   // Clean task title
@@ -211,7 +217,7 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
       break;
     }
   }
-  if (untilMatch) tempTitle = tempTitle.replace(untilMatch[0], '');
+  if (untilMatch) tempTitle = tempTitle.replace(untilMatch, '');
   for (const pattern of startDatePatterns) tempTitle = tempTitle.replace(pattern, '');
   const chronoDateTimes = chrono.parse(tempTitle, chronoRef);
   for (const dt of chronoDateTimes) if (dt.text) tempTitle = tempTitle.replace(dt.text, '');
@@ -224,6 +230,7 @@ const parseTaskDetails = (taskTitle, timeZone = 'UTC') => {
     .trim();
 
   const detectedPriority = detectPriority(taskTitle);
+
   const finalDueDate = recurrenceStartDate || dueDate || (() => {
     let fallback = addDays(toZonedTime(new Date(), timeZone), 1);
     fallback = set(fallback, { hours: 9, minutes: 0, seconds: 0, milliseconds: 0 });
