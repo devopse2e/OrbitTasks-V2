@@ -1,31 +1,39 @@
+// server.js  ─ Express entrypoint for Vercel & local dev
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+const app   = express();
+const PORT  = process.env.PORT || 80;
+const HOST  = '0.0.0.0';
 
-const app = express();
-const PORT = process.env.PORT || 80;
+// ---------------- Static frontend -----------------
+/*  Resolve once at start so the same path works:
+    – locally        : /absolute/path/to/project/frontend/dist
+    – in Vercel λ    : /var/task/frontend/dist              */
+const STATIC_DIR = path.join(__dirname, 'frontend', 'dist');
+console.log('[SERVER] Serving static files from:', STATIC_DIR);
+app.use(express.static(STATIC_DIR));
+
+// ---------------- API proxy -----------------
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-
-app.use(express.static(path.join(__dirname, 'dist')));
-
-// Proxy all /api requests to backend
-app.use('/api', createProxyMiddleware({
-    target: process.env.BACKEND_URL, // This should be 'http://localhost:3001'
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target: BACKEND_URL,
     changeOrigin: true,
-    logLevel: 'debug', // Keep this on to see proxy activity
-  }));
-  
+    logLevel: 'info',       // set to 'debug' for verbose proxy logs
+  })
+);
 
-// SPA fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// ---------------- SPA fallback -----------------
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
 
-const HOST = '0.0.0.0';
-
+// ---------------- Start server -----------------
 app.listen(PORT, HOST, () => {
-    console.log(`Frontend server running on http://${HOST}:${PORT}`);
-    console.log(`Proxying /api requests to ${BACKEND_URL}`);
+  console.log(`[SERVER] Frontend running on http://${HOST}:${PORT}`);
+  console.log(`[SERVER] Proxying /api → ${BACKEND_URL}`);
 });
