@@ -2,7 +2,13 @@
   base = "frontend"
   publish = "dist"
   command = "npm run build"
+  functions = "netlify/functions"
 
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/proxy/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
