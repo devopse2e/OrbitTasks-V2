@@ -7,7 +7,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app  = express();
 const HOST = '0.0.0.0';
 const PORT = process.env.PORT || 80;
-const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 /* -------------------------------------------------
    Resolve the directory that contains index.html
