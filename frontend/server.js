@@ -7,7 +7,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app  = express();
 const HOST = '0.0.0.0';
 const PORT = process.env.PORT || 80;
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 /* -------------------------------------------------
    Resolve the directory that contains index.html
@@ -40,5 +40,5 @@ app.get('*', (_req, res) => {
 /* -------------- start ------------------------ */
 app.listen(PORT, HOST, () => {
   console.log(`[SERVER] Frontend running on http://${HOST}:${PORT}`);
-  console.log(`[SERVER] Proxying /api → ${BACKEND_URL}`);
+  console.log(`[SERVER] Proxying /api → ${REACT_APP_BACKEND_URL}`);
 });
