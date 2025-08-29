@@ -1,44 +1,31 @@
-// server.js  ─ works both locally and on Vercel
 require('dotenv').config();
 const express = require('express');
-const path    = require('path');
+const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-const app  = express();
-const HOST = '0.0.0.0';
+
+const app = express();
 const PORT = process.env.PORT || 80;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
-/* -------------------------------------------------
-   Resolve the directory that contains index.html
-   – Locally  :  projectRoot/frontend/dist
-   – Vercel λ :  /var/task/frontend/dist
--------------------------------------------------- */
-const staticDir =
-  process.env.NODE_ENV === 'production'
-    ? path.join(__dirname, 'dist')               // __dirname === /var/task/frontend
-    : path.join(__dirname, 'dist');  // __dirname === project root
+app.use(express.static(path.join(__dirname, 'dist')));
 
-console.log('[SERVER] Serving static files from:', staticDir);
-app.use(express.static(staticDir));
-
-/* ------------ proxy any /api request to backend ------------- */
-app.use(
-  '/api',
-  createProxyMiddleware({
-    target: BACKEND_URL,
+// Proxy all /api requests to backend
+app.use('/api', createProxyMiddleware({
+    target: process.env.BACKEND_URL, // This should be 'http://localhost:3001'
     changeOrigin: true,
-    logLevel: 'info'          //  set to 'debug' only when needed
-  })
-);
+    logLevel: 'debug', // Keep this on to see proxy activity
+  }));
+  
 
-/* -------------- SPA fallback ---------------- */
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(staticDir, 'index.html'));
+// SPA fallback
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-/* -------------- start ------------------------ */
+const HOST = '0.0.0.0';
+
 app.listen(PORT, HOST, () => {
-  console.log(`[SERVER] Frontend running on http://${HOST}:${PORT}`);
-  console.log(`[SERVER] Proxying /api → ${BACKEND_URL}`);
+    console.log(`Frontend server running on http://${HOST}:${PORT}`);
+    console.log(`Proxying /api requests to ${BACKEND_URL}`);
 });
