@@ -1,8 +1,14 @@
 [build]
-  functions = "functions"  # Points to your functions folder
+  functions = "functions"  # Must match your functions folder
 
 [[redirects]]
-  from = "/api/*"
+  from = "/api/*"          # Matches your routes like /api/auth
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"              # Catch-all for root and other paths
   to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
