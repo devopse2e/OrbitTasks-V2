@@ -1,4 +1,10 @@
+[build]
+  base = "frontend"
+  publish = "frontend/dist"
+  command = "npm run build"
+
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
+  status = 200  # For SPA reloads (from earlier fix)
