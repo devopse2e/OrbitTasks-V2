@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 const tips = [
   "Organize chaos into clarity.",
-  "Create your tasks easily with NLP suggestions",
+  "Create your tasks easily with NLP suggestions.",
   "Your tasks, orbiting perfectly."
 ];
 
