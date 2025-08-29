@@ -17,7 +17,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const staticDir =
   process.env.NODE_ENV === 'production'
     ? path.join(__dirname, 'dist')               // __dirname === /var/task/frontend
-    : path.join(__dirname, 'frontend', 'dist');  // __dirname === project root
+    : path.join(__dirname, 'dist');  // __dirname === project root
 
 console.log('[SERVER] Serving static files from:', staticDir);
 app.use(express.static(staticDir));
