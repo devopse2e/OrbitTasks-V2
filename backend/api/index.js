@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Combined CORS config
 app.use(cors({
-  origin: ['https://orbittasks.vercel.app', 'http://localhost:3000'],  // Add your frontend domains
+  origin: ['https://orbit-tasks.netlify.app', 'http://localhost:3000'],  // Add your frontend domains
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow needed methods
   allowedHeaders: ['Content-Type', 'Authorization']  // For JWT/auth
 }));
