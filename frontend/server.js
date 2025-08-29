@@ -40,5 +40,5 @@ app.get('*', (_req, res) => {
 /* -------------- start ------------------------ */
 app.listen(PORT, HOST, () => {
   console.log(`[SERVER] Frontend running on http://${HOST}:${PORT}`);
-  console.log(`[SERVER] Proxying /api → ${REACT_APP_BACKEND_URL}`);
+  console.log(`[SERVER] Proxying /api → ${BACKEND_URL}`);
 });
