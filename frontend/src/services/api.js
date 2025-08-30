@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api'; // Use proxy in dev, override in prod
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL ||'/api'; // Use proxy in dev, override in prod
 
 // Create axios instance with configuration
 const api = axios.create({
