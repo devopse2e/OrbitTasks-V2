@@ -24,12 +24,18 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Combined CORS config
+// Combined CORS config – updated for both Netlify and Vercel frontends
 app.use(cors({
-  origin: ['https://orbit-tasks.netlify.app', 'http://localhost:3000'],  // Add your frontend domains
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow needed methods
-  allowedHeaders: ['Content-Type', 'Authorization']  // For JWT/auth
+  origin: [
+    'https://orbit-tasks.netlify.app',          // Netlify frontend
+    'https://orbittasks.vercel.app',  // Vercel frontend (replace with your actual Vercel URL)
+    'http://localhost:3000'                     // Local dev
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // Added OPTIONS for preflight requests
+  allowedHeaders: ['Content-Type', 'Authorization'],     // For JWT/auth
+  credentials: true                                     // If using cookies or auth with credentials
 }));
+
 
 // Connect to DB on each request (serverless-friendly)
 app.use(async (req, res, next) => {
