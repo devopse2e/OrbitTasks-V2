@@ -33,8 +33,8 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env': {
-       REACT_APP_API_URL: JSON.stringify(
-        process.env.REACT_APP_API_URL || 
+       REACT_APP_BACKEND_URL: JSON.stringify(
+        process.env.REACT_APP_BACKEND_URL || 
         (process.env.NODE_ENV === 'production' 
           ? 'https://orbittasks-backend.netlify.app/api'  // Full URL for prod fallback
           : '/api') // Inject from .env or fallback
